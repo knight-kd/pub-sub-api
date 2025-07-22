@@ -1,22 +1,22 @@
 package genericpubsub;
 
+import com.google.protobuf.ByteString;
+import com.salesforce.eventbus.protobuf.*;
+import io.grpc.stub.StreamObserver;
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericRecord;
+import utility.CommonContext;
+import utility.ExampleConfigurations;
+
 import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericRecord;
-
-import com.google.protobuf.ByteString;
-import com.salesforce.eventbus.protobuf.*;
-
-import io.grpc.stub.StreamObserver;
-import utility.CommonContext;
-import utility.ExampleConfigurations;
 
 /**
  * A single-topic subscriber that consumes events using Event Bus API ManagedSubscribe RPC. The example demonstrates how to:
@@ -254,7 +254,7 @@ public class ManagedSubscribe extends CommonContext implements StreamObserver<Ma
     }
 
     public static void main(String args[]) throws IOException  {
-        ExampleConfigurations exampleConfigurations = new ExampleConfigurations("arguments.yaml");
+        ExampleConfigurations exampleConfigurations = new ExampleConfigurations("arguments-" + args[1] + ".yaml");
 
         // Using the try-with-resource statement. The CommonContext class implements AutoCloseable in
         // order to close the resources used.

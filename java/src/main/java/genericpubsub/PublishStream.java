@@ -1,5 +1,22 @@
 package genericpubsub;
 
+import com.google.common.collect.Lists;
+import com.google.protobuf.ByteString;
+import com.salesforce.eventbus.protobuf.ProducerEvent;
+import com.salesforce.eventbus.protobuf.PublishRequest;
+import com.salesforce.eventbus.protobuf.PublishResponse;
+import com.salesforce.eventbus.protobuf.PublishResult;
+import io.grpc.Status;
+import io.grpc.stub.ClientCallStreamObserver;
+import io.grpc.stub.StreamObserver;
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericDatumWriter;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.BinaryEncoder;
+import org.apache.avro.io.EncoderFactory;
+import utility.CommonContext;
+import utility.ExampleConfigurations;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
@@ -8,22 +25,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-
-import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericDatumWriter;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.io.BinaryEncoder;
-import org.apache.avro.io.EncoderFactory;
-
-import com.google.common.collect.Lists;
-import com.google.protobuf.ByteString;
-import com.salesforce.eventbus.protobuf.*;
-
-import io.grpc.Status;
-import io.grpc.stub.ClientCallStreamObserver;
-import io.grpc.stub.StreamObserver;
-import utility.CommonContext;
-import utility.ExampleConfigurations;
 
 /**
  * A single-topic publisher that creates Order Event events and publishes them. This example
@@ -238,7 +239,7 @@ public class PublishStream extends CommonContext {
     }
 
     public static void main(String[] args) throws IOException {
-        ExampleConfigurations exampleConfigurations = new ExampleConfigurations("arguments.yaml");
+        ExampleConfigurations exampleConfigurations = new ExampleConfigurations("arguments-" + args[1] + ".yaml");
 
         // Using the try-with-resource statement. The CommonContext class implements AutoCloseable in
         // order to close the resources used.

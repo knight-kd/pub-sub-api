@@ -1,22 +1,27 @@
 package genericpubsub;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import io.grpc.Metadata;
-import io.grpc.StatusRuntimeException;
-import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericRecord;
-
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.protobuf.ByteString;
 import com.salesforce.eventbus.protobuf.*;
-
+import io.grpc.Metadata;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericRecord;
 import utility.CommonContext;
 import utility.ExampleConfigurations;
+import utility.OrderDeserializer;
+import utility.ReplayIdParser;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A single-topic subscriber that consumes events using Event Bus API Subscribe RPC. The example demonstrates how to:
@@ -250,8 +255,15 @@ public class Subscribe extends CommonContext {
         Schema writerSchema = getSchema(ce.getEvent().getSchemaId());
         this.storedReplay = ce.getReplayId();
         GenericRecord record = deserialize(writerSchema, ce.getEvent().getPayload());
-        logger.info("Received event with payload: " + record.toString() + " with schema name: " + writerSchema.getName());
+        logger.info("Received event with EventUuid:" + ce.getEvent().getId() + ", payload: " + record.toString() + " with schema name: " + writerSchema.getName());
+        logger.info("ReplayId: " + ReplayIdParser.getReplayIdStringFromByteString(ce.getReplayId()));
+        Gson gson = new GsonBuilder()
+                .registerTypeAdapter(OrderEventModel.class, new OrderDeserializer())
+                .create();
+        OrderEventModel model = gson.fromJson(record.toString(), OrderEventModel.class);
+        logger.info("OrderEvent: " + model.toString());
         if (processChangedFields) {
+            // This example expands     if (processChangedFields) {
             // This example expands the changedFields bitmap field in ChangeEventHeader.
             // To expand the other bitmap fields, i.e., diffFields and nulledFields, replicate or modify this code.
             processAndPrintBitmapFields(writerSchema, record, "changedFields");
@@ -321,7 +333,7 @@ public class Subscribe extends CommonContext {
     }
 
     public static void main(String args[]) throws IOException  {
-        ExampleConfigurations exampleConfigurations = new ExampleConfigurations("arguments.yaml");
+        ExampleConfigurations exampleConfigurations = new ExampleConfigurations("arguments-" + args[1] + ".yaml");
 
         // Using the try-with-resource statement. The CommonContext class implements AutoCloseable in
         // order to close the resources used.

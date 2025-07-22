@@ -1,12 +1,11 @@
 package genericpubsub;
 
-import java.io.IOException;
-
 import com.salesforce.eventbus.protobuf.TopicInfo;
 import com.salesforce.eventbus.protobuf.TopicRequest;
-
 import utility.CommonContext;
 import utility.ExampleConfigurations;
+
+import java.io.IOException;
 
 /**
  * An example that retrieves the topic info of a single-topic.
@@ -33,7 +32,7 @@ public class GetTopic extends CommonContext {
     }
 
     public static void main(String[] args) throws IOException {
-        ExampleConfigurations exampleConfigurations = new ExampleConfigurations("arguments.yaml");
+        ExampleConfigurations exampleConfigurations = new ExampleConfigurations("arguments-" + args[1] + ".yaml");
 
         // Using the try-with-resource statement. The CommonContext class implements AutoCloseable in
         // order to close the resources used.

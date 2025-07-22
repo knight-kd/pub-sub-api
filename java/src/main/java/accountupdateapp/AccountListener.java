@@ -103,8 +103,8 @@ public class AccountListener {
     }
 
     public static void main(String[] args) throws IOException {
-        // For this example specifying only the required configurations in the arguments.yaml is enough.
-        ExampleConfigurations requiredParameters = new ExampleConfigurations("arguments.yaml");
+        // For this example specifying only the required configurations in the arguments-" + args[1] + ".yaml is enough.
+        ExampleConfigurations requiredParameters = new ExampleConfigurations("arguments-" + args[1] + ".yaml");
         try {
             AccountListener ac = new AccountListener(requiredParameters);
             ac.startApp();

@@ -1,14 +1,13 @@
 package utility;
 
+import com.google.protobuf.ByteString;
+import com.salesforce.eventbus.protobuf.ReplayPreset;
+import org.yaml.snakeyaml.Yaml;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
-
-import org.yaml.snakeyaml.Yaml;
-
-import com.google.protobuf.ByteString;
-import com.salesforce.eventbus.protobuf.ReplayPreset;
 
 /**
  * The ExampleConfigurations class is used for setting up the configurations for running the examples.
@@ -34,11 +33,12 @@ public class ExampleConfigurations {
     private ByteString replayId;
     private String managedSubscriptionId;
     private String developerName;
+    private String userId;
 
     public ExampleConfigurations() {
         this(null, null, null, null, null,
                 null, null, null, 5, false, 5, false,
-                false, false, ReplayPreset.LATEST, null, null, null);
+                false, false, ReplayPreset.LATEST, null, null, null, null);
     }
     public ExampleConfigurations(String filename) throws IOException {
 
@@ -67,13 +67,13 @@ public class ExampleConfigurations {
                 false : Boolean.parseBoolean(obj.get("PROCESS_CHANGE_EVENT_HEADER_FIELDS").toString());
         this.plaintextChannel = obj.get("USE_PLAINTEXT_CHANNEL") != null && Boolean.parseBoolean(obj.get("USE_PLAINTEXT_CHANNEL").toString());
         this.providedLoginUrl = obj.get("USE_PROVIDED_LOGIN_URL") != null && Boolean.parseBoolean(obj.get("USE_PROVIDED_LOGIN_URL").toString());
-
+        this.userId = obj.get("USER_ID") == null? null : obj.get("USER_ID").toString();
         if (obj.get("REPLAY_PRESET") != null) {
             if (obj.get("REPLAY_PRESET").toString().equals("EARLIEST")) {
                 this.replayPreset = ReplayPreset.EARLIEST;
             } else if (obj.get("REPLAY_PRESET").toString().equals("CUSTOM")) {
                 this.replayPreset = ReplayPreset.CUSTOM;
-                this.replayId = getByteStringFromReplayIdInputString(obj.get("REPLAY_ID").toString());
+                this.replayId = ReplayIdParser.getByteStringFromReplayIdString(obj.get("REPLAY_ID").toString());
             } else {
                 this.replayPreset = ReplayPreset.LATEST;
             }
@@ -88,14 +88,14 @@ public class ExampleConfigurations {
     public ExampleConfigurations(String username, String password, String loginUrl,
                                  String pubsubHost, int pubsubPort, String topic) {
         this(username, password, loginUrl, null, null, pubsubHost, pubsubPort, topic,
-                5, false, Integer.MAX_VALUE, false, false, false, ReplayPreset.LATEST, null, null, null);
+                5, false, Integer.MAX_VALUE, false, false, false, ReplayPreset.LATEST, null, null, null, null);
     }
 
     public ExampleConfigurations(String username, String password, String loginUrl, String tenantId, String accessToken,
                                  String pubsubHost, Integer pubsubPort, String topic, Integer numberOfEventsToPublish,
                                  Boolean singlePublishRequest, Integer numberOfEventsToSubscribeInEachFetchRequest,
                                  Boolean processChangedFields, Boolean plaintextChannel, Boolean providedLoginUrl,
-                                 ReplayPreset replayPreset, ByteString replayId, String devName, String managedSubId) {
+                                 ReplayPreset replayPreset, ByteString replayId, String devName, String managedSubId, String userId) {
         this.username = username;
         this.password = password;
         this.loginUrl = loginUrl;
@@ -114,6 +114,7 @@ public class ExampleConfigurations {
         this.replayId = replayId;
         this.developerName = devName;
         this.managedSubscriptionId = managedSubId;
+        this.userId = userId;
     }
 
     public String getUsername() {
@@ -260,6 +261,13 @@ public class ExampleConfigurations {
         this.developerName = developerName;
     }
 
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 
     /**
      * NOTE: replayIds are meant to be opaque (See docs: https://developer.salesforce.com/docs/platform/pub-sub-api/guide/intro.html)
@@ -278,5 +286,23 @@ public class ExampleConfigurations {
         }
         replayId = ByteString.copyFrom(b);
         return replayId;
+    }
+
+    /**
+     * 将 ByteString 类型的 replayId 转换回原来的输入字符串格式。
+     *
+     * @param replayId 要转换的 ByteString 类型的 replayId
+     * @return 转换后的字符串，格式类似于 "[1, 2, 3]"
+     */
+    public String getReplayIdStringFromByteString(ByteString replayId) {
+        StringBuilder sb = new StringBuilder("[");
+        for (int i = 0; i < replayId.size(); i++) {
+            if (i > 0) {
+                sb.append(", ");
+            }
+            sb.append(replayId.byteAt(i));
+        }
+        sb.append("]");
+        return sb.toString();
     }
 }

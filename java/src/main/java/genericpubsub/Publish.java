@@ -1,19 +1,18 @@
 package genericpubsub;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.List;
-
+import com.google.protobuf.ByteString;
+import com.salesforce.eventbus.protobuf.*;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.EncoderFactory;
-
-import com.google.protobuf.ByteString;
-import com.salesforce.eventbus.protobuf.*;
 import utility.CommonContext;
 import utility.ExampleConfigurations;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * A single-topic publisher that creates an Order Event event and publishes it. This example uses
@@ -130,7 +129,7 @@ public class Publish extends CommonContext {
     }
 
     public static void main(String[] args) throws IOException {
-        ExampleConfigurations exampleConfigurations = new ExampleConfigurations("arguments.yaml");
+        ExampleConfigurations exampleConfigurations = new ExampleConfigurations("arguments-" + args[1] + ".yaml");
 
         // Using the try-with-resource statement. The CommonContext class implements AutoCloseable in
         // order to close the resources used.

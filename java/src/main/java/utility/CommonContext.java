@@ -1,12 +1,9 @@
 package utility;
 
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
+import com.google.common.base.CaseFormat;
+import com.google.protobuf.ByteString;
+import com.salesforce.eventbus.protobuf.*;
+import io.grpc.*;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
@@ -20,11 +17,13 @@ import org.eclipse.jetty.client.HttpProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.CaseFormat;
-import com.google.protobuf.ByteString;
-import com.salesforce.eventbus.protobuf.*;
-
-import io.grpc.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static utility.EventParser.getFieldListFromBitmap;
 
@@ -34,7 +33,6 @@ import static utility.EventParser.getFieldListFromBitmap;
  * sending requests, generating events etc.
  */
 public class CommonContext implements AutoCloseable {
-
     protected static final Logger logger = LoggerFactory.getLogger(CommonContext.class.getClass());
 
     protected final ManagedChannel channel;
@@ -50,6 +48,8 @@ public class CommonContext implements AutoCloseable {
     protected TopicInfo topicInfo;
     protected SchemaInfo schemaInfo;
     protected String sessionToken;
+    protected String userId;
+
 
     public CommonContext(final ExampleConfigurations options) {
         String grpcHost = options.getPubsubHost();
@@ -61,7 +61,7 @@ public class CommonContext implements AutoCloseable {
         } else {
             channel = ManagedChannelBuilder.forAddress(grpcHost, grpcPort).build();
         }
-
+        userId = options.getUserId();
         httpClient = setupHttpClient();
         sessionTokenService = new SessionTokenService(httpClient);
 
@@ -72,6 +72,7 @@ public class CommonContext implements AutoCloseable {
 
         asyncStub = PubSubGrpc.newStub(interceptedChannel).withCallCredentials(callCredentials);
         blockingStub = PubSubGrpc.newBlockingStub(interceptedChannel).withCallCredentials(callCredentials);
+
     }
 
     /**
@@ -190,7 +191,7 @@ public class CommonContext implements AutoCloseable {
     public GenericRecord createEventMessage(Schema schema) {
         // Update CreatedById with the appropriate User Id from your org.
         return new GenericRecordBuilder(schema).set("CreatedDate", System.currentTimeMillis())
-                .set("CreatedById", "<User_Id>").set("Order_Number__c", "1")
+                .set("CreatedById", this.userId).set("Order_Number__c", "1")
                 .set("City__c", "Los Angeles").set("Amount__c", 35.0).build();
     }
 
@@ -206,9 +207,22 @@ public class CommonContext implements AutoCloseable {
      */
     public GenericRecord createEventMessage(Schema schema, final int counter) {
         // Update CreatedById with the appropriate User Id from your org.
+//        return new GenericRecordBuilder(schema)
+//                .set("CreatedDate", System.currentTimeMillis())
+//                .set("CreatedById", USER_ID)
+//                .set("Store_Id__c", "123")
+//                .set("Payment_Reference__c", "paymentReference")
+//                .set("Amount_Minor_Units__c", 100)
+//                .set("Currency__c", "HKD")
+//                .set("Order_Id__c", "123")
+//                .set("Return_Url__c", "https://xxx.com")
+//                .build();
         return new GenericRecordBuilder(schema).set("CreatedDate", System.currentTimeMillis())
-                .set("CreatedById", "<User_Id>").set("Order_Number__c", String.valueOf(counter+1))
-                .set("City__c", "Los Angeles").set("Amount__c", 35.0).build();
+                .set("CreatedById", this.userId)
+                .set("Order_Number__c", String.valueOf(counter+1))
+                .set("City__c", "Los Angeles")
+                .set("Amount__c", 35.0)
+                .build();
     }
 
     public List<GenericRecord> createEventMessages(Schema schema, final int numEvents) {
@@ -216,12 +230,12 @@ public class CommonContext implements AutoCloseable {
         String[] orderNumbers = {"99","100","101","102","103"};
         String[] cities = {"Los Angeles", "New York", "San Francisco", "San Jose", "Boston"};
         Double[] amounts = {35.0, 20.0, 2.0, 123.0, 180.0};
-
+        logger.info("UserId: " + this.userId);
         // Update CreatedById with the appropriate User Id from your org.
         List<GenericRecord> events = new ArrayList<>();
         for (int i=0; i<numEvents; i++) {
             events.add(new GenericRecordBuilder(schema).set("CreatedDate", System.currentTimeMillis())
-                    .set("CreatedById", "<User_Id>").set("Order_Number__c", orderNumbers[i % 5])
+                    .set("CreatedById", this.userId).set("Order_Number__c", orderNumbers[i % 5])
                     .set("City__c", cities[i % 5]).set("Amount__c", amounts[i % 5]).build());
         }
 
